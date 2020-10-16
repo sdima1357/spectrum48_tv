@@ -1,0 +1,471 @@
+#include "main.h"
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#define READ_ID  	0x9f
+#define RESET_EN 	0x66
+#define RESET    	0x99
+#define WRITE    	0x02
+#define READ     	0x03
+#define READ_FAST   0x0B
+#define WRAP_TOGGLE 0xC0
+
+// 8MBytes
+#define HRAM_SIZE   (8*(1<<20))
+
+
+extern SPI_HandleTypeDef hspi1;
+uint8_t retv[128];
+uint8_t tetv[128];
+#define HRAM_CS_SET      SPI1_CS_GPIO_Port->BSRR = SPI1_CS_Pin;
+#define HRAM_CS_RESET    SPI1_CS_GPIO_Port->BSRR = (uint32_t)SPI1_CS_Pin<<16U;
+
+inline void SPIx_WriteF(uint8_t  Value)
+{
+	    *((__IO uint8_t*)&hspi1.Instance->DR) = Value;
+	    while(((hspi1.Instance->SR) & SPI_FLAG_TXE) != SPI_FLAG_TXE)
+	    {
+		    //~ busy_counter++;
+	    }
+}
+
+
+inline void SPIx_ReadF(uint8_t * Value)
+{
+	    while(((hspi1.Instance->SR) & SPI_FLAG_RXNE) != SPI_FLAG_RXNE)
+	    {
+	    }
+	    *Value =  *((__IO uint8_t*)&hspi1.Instance->DR);
+}
+inline void SPIx_WriteF16(uint16_t  Value)
+{
+	    *((__IO uint16_t*)&hspi1.Instance->DR) = Value;
+	    while(((hspi1.Instance->SR) & SPI_FLAG_TXE) != SPI_FLAG_TXE)
+	    {
+		    //~ busy_counter++;
+	    }
+}
+inline void SPIx_ReadF16(uint16_t * Value)
+{
+	    while(((hspi1.Instance->SR) & SPI_FLAG_RXNE) != SPI_FLAG_RXNE)
+	    {
+		    //~ busy_counter++;
+	    }
+	    *Value =  *((__IO uint16_t*)&hspi1.Instance->DR);
+}
+
+void hram_write32F(uint32_t addr , void* pnt)
+{
+	tetv[0] = WRITE;
+	tetv[1] = (addr>>16) & 0xff;
+	tetv[2] = (addr>>8) & 0xff;
+	tetv[3] = (addr>>0) & 0b11100000;
+	HAL_GPIO_WritePin(SPI1_CS_GPIO_Port,SPI1_CS_Pin,GPIO_PIN_RESET);
+	HRAM_CS_RESET;
+	uint8_t dummy;
+	SPIx_WriteF(tetv[0]);
+	SPIx_WriteF(tetv[1]);
+	SPIx_WriteF(tetv[2]);
+	SPIx_WriteF(tetv[3]);
+
+	uint8_t *bpnt = pnt;
+
+	SPIx_WriteF(bpnt[0]);
+	SPIx_WriteF(bpnt[1]);
+	SPIx_WriteF(bpnt[2]);
+	SPIx_WriteF(bpnt[3]);
+
+	SPIx_WriteF(bpnt[4]);
+	SPIx_WriteF(bpnt[5]);
+	SPIx_WriteF(bpnt[6]);
+	SPIx_WriteF(bpnt[7]);
+
+
+	SPIx_WriteF(bpnt[8]);
+	SPIx_WriteF(bpnt[9]);
+	SPIx_WriteF(bpnt[10]);
+	SPIx_WriteF(bpnt[11]);
+
+	SPIx_WriteF(bpnt[12]);
+	SPIx_WriteF(bpnt[13]);
+	SPIx_WriteF(bpnt[14]);
+	SPIx_WriteF(bpnt[15]);
+
+	SPIx_WriteF(bpnt[16+0]);
+	SPIx_WriteF(bpnt[16+1]);
+	SPIx_WriteF(bpnt[16+2]);
+	SPIx_WriteF(bpnt[16+3]);
+
+	SPIx_WriteF(bpnt[16+4]);
+	SPIx_WriteF(bpnt[16+5]);
+	SPIx_WriteF(bpnt[16+6]);
+	SPIx_WriteF(bpnt[16+7]);
+
+
+	SPIx_WriteF(bpnt[16+8]);
+	SPIx_WriteF(bpnt[16+9]);
+	SPIx_WriteF(bpnt[16+10]);
+	SPIx_WriteF(bpnt[16+11]);
+
+	SPIx_WriteF(bpnt[16+12]);
+	SPIx_WriteF(bpnt[16+13]);
+	SPIx_WriteF(bpnt[16+14]);
+	SPIx_WriteF(bpnt[16+15]);
+
+	//while(((hspi1.Instance->SR) & SPI_FLAG_RXNE) != SPI_FLAG_RXNE){};
+	SPIx_ReadF(&dummy);
+	HRAM_CS_SET;
+
+}
+void hram_read32F(uint32_t addr , void* pnt)
+{
+	tetv[0] = READ_FAST;
+	tetv[1] = (addr>>16) & 0xff;
+	tetv[2] = (addr>>8) & 0xff;
+	tetv[3] = (addr>>0) & 0b11100000;
+	HRAM_CS_RESET;
+	uint8_t dummy;
+	SPIx_WriteF(tetv[0]);	SPIx_ReadF(&dummy);
+	SPIx_WriteF(tetv[1]);	SPIx_ReadF(&dummy);
+	SPIx_WriteF(tetv[2]);	SPIx_ReadF(&dummy);
+	SPIx_WriteF(tetv[3]);   SPIx_ReadF(&dummy);
+	SPIx_WriteF(dummy);		SPIx_ReadF(&dummy);
+	uint8_t *bpnt = pnt;
+#define k 0
+	SPIx_WriteF(dummy);		SPIx_ReadF(&bpnt[k+0]);
+	SPIx_WriteF(dummy);		SPIx_ReadF(&bpnt[k+1]);
+	SPIx_WriteF(dummy);		SPIx_ReadF(&bpnt[k+2]);
+	SPIx_WriteF(dummy);		SPIx_ReadF(&bpnt[k+3]);
+
+	SPIx_WriteF(dummy);		SPIx_ReadF(&bpnt[k+4]);
+	SPIx_WriteF(dummy);		SPIx_ReadF(&bpnt[k+5]);
+	SPIx_WriteF(dummy);		SPIx_ReadF(&bpnt[k+6]);
+	SPIx_WriteF(dummy);		SPIx_ReadF(&bpnt[k+7]);
+#undef k
+#define k 8
+	SPIx_WriteF(dummy);		SPIx_ReadF(&bpnt[k+0]);
+	SPIx_WriteF(dummy);		SPIx_ReadF(&bpnt[k+1]);
+	SPIx_WriteF(dummy);		SPIx_ReadF(&bpnt[k+2]);
+	SPIx_WriteF(dummy);		SPIx_ReadF(&bpnt[k+3]);
+
+	SPIx_WriteF(dummy);		SPIx_ReadF(&bpnt[k+4]);
+	SPIx_WriteF(dummy);		SPIx_ReadF(&bpnt[k+5]);
+	SPIx_WriteF(dummy);		SPIx_ReadF(&bpnt[k+6]);
+	SPIx_WriteF(dummy);		SPIx_ReadF(&bpnt[k+7]);
+#undef k
+#define k 16
+	SPIx_WriteF(dummy);		SPIx_ReadF(&bpnt[k+0]);
+	SPIx_WriteF(dummy);		SPIx_ReadF(&bpnt[k+1]);
+	SPIx_WriteF(dummy);		SPIx_ReadF(&bpnt[k+2]);
+	SPIx_WriteF(dummy);		SPIx_ReadF(&bpnt[k+3]);
+
+	SPIx_WriteF(dummy);		SPIx_ReadF(&bpnt[k+4]);
+	SPIx_WriteF(dummy);		SPIx_ReadF(&bpnt[k+5]);
+	SPIx_WriteF(dummy);		SPIx_ReadF(&bpnt[k+6]);
+	SPIx_WriteF(dummy);		SPIx_ReadF(&bpnt[k+7]);
+#undef k
+#define k 24
+	SPIx_WriteF(dummy);		SPIx_ReadF(&bpnt[k+0]);
+	SPIx_WriteF(dummy);		SPIx_ReadF(&bpnt[k+1]);
+	SPIx_WriteF(dummy);		SPIx_ReadF(&bpnt[k+2]);
+	SPIx_WriteF(dummy);		SPIx_ReadF(&bpnt[k+3]);
+
+	SPIx_WriteF(dummy);		SPIx_ReadF(&bpnt[k+4]);
+	SPIx_WriteF(dummy);		SPIx_ReadF(&bpnt[k+5]);
+	SPIx_WriteF(dummy);		SPIx_ReadF(&bpnt[k+6]);
+	SPIx_WriteF(dummy);		SPIx_ReadF(&bpnt[k+7]);
+#undef k
+	//uint8_t dummy;
+    //SPIx_ReadF(&dummy);
+/*
+    while(((hspi1.Instance->SR) & SPI_FLAG_BSY) != RESET)
+	{
+	}
+*/
+	//HAL_SPI_TransmitReceive(&hspi1,tetv,retv, 4, 1000);
+	//HAL_SPI_TransmitReceive(&hspi1,pnt,retv, 32, 1000);
+	HRAM_CS_SET;
+	//HAL_GPIO_WritePin(SPI1_CS_GPIO_Port,SPI1_CS_Pin,GPIO_PIN_SET);
+}
+
+void hram_write32(uint32_t addr , void* pnt)
+{
+	tetv[0] = WRITE;
+	tetv[1] = (addr>>16) & 0xff;
+	tetv[2] = (addr>>8) & 0xff;
+	tetv[3] = (addr>>0) & 0b11100000;
+	//HAL_GPIO_WritePin(SPI1_CS_GPIO_Port,SPI1_CS_Pin,GPIO_PIN_RESET);
+	HRAM_CS_RESET;
+	HAL_SPI_Transmit(&hspi1,tetv, 4, 1000);
+	HAL_SPI_Transmit_DMA(&hspi1,pnt, 32);
+	while(hspi1.State!=HAL_SPI_STATE_READY){};
+	HRAM_CS_SET;
+	//HAL_GPIO_WritePin(SPI1_CS_GPIO_Port,SPI1_CS_Pin,GPIO_PIN_SET);
+}
+void hram_read32(uint32_t addr , void* pnt)
+{
+	tetv[0] = READ_FAST;
+	tetv[1] = (addr>>16) & 0xff;
+	tetv[2]= (addr>>8) & 0xff;
+	tetv[3] = (addr>>0) & 0b11100000;
+	HRAM_CS_RESET;
+	//HAL_GPIO_WritePin(SPI1_CS_GPIO_Port,SPI1_CS_Pin,GPIO_PIN_RESET);
+	HAL_SPI_Transmit(&hspi1,tetv, 5, 1000);
+	HAL_SPI_Receive_DMA(&hspi1,pnt, 32);
+	while(hspi1.State!=HAL_SPI_STATE_READY){};
+	HRAM_CS_SET;
+	//HAL_GPIO_WritePin(SPI1_CS_GPIO_Port,SPI1_CS_Pin,GPIO_PIN_SET);
+}
+
+void hram_write1024(uint32_t addr , void* pnt)
+{
+	tetv[0] = WRITE;
+	tetv[1] = (addr>>16)& 0xff;
+	tetv[2] = (addr>>8) & 0b11111100;
+	tetv[3] = (addr>>0) & 0;
+	//HAL_GPIO_WritePin(SPI1_CS_GPIO_Port,SPI1_CS_Pin,GPIO_PIN_RESET);
+	HRAM_CS_RESET;
+	HAL_SPI_Transmit(&hspi1,tetv, 4, 1000);
+	HAL_SPI_Transmit_DMA(&hspi1,pnt, 1024);
+	while(hspi1.State!=HAL_SPI_STATE_READY){};
+	HRAM_CS_SET;
+	//HAL_GPIO_WritePin(SPI1_CS_GPIO_Port,SPI1_CS_Pin,GPIO_PIN_SET);
+}
+void hram_read1024(uint32_t addr , void* pnt)
+{
+	tetv[0] = READ_FAST;
+	tetv[1] = (addr>>16)& 0xff;
+	tetv[2] = (addr>>8) & 0b11111100;
+	tetv[3] = (addr>>0) & 0;
+	HRAM_CS_RESET;
+	//HAL_GPIO_WritePin(SPI1_CS_GPIO_Port,SPI1_CS_Pin,GPIO_PIN_RESET);
+	HAL_SPI_Transmit(&hspi1,tetv, 5, 1000);
+	HAL_SPI_Receive_DMA(&hspi1,pnt, 1024);
+	while(hspi1.State!=HAL_SPI_STATE_READY){};
+	HRAM_CS_SET;
+	//HAL_GPIO_WritePin(SPI1_CS_GPIO_Port,SPI1_CS_Pin,GPIO_PIN_SET);
+}
+
+uint32_t block[32/sizeof(uint32_t)];
+uint32_t block_long[1024/sizeof(uint32_t)];
+
+
+
+int  init_ram()
+{
+	memset(tetv,0,128);
+	memset(retv,0xff,128);
+
+	printf("Hello!!!!!!!!!!!!!!!\n");
+	HAL_GPIO_WritePin(SPI1_CS_GPIO_Port,SPI1_CS_Pin,GPIO_PIN_SET);
+	HAL_GPIO_WritePin(SPI1_CS_GPIO_Port,SPI1_CS_Pin,GPIO_PIN_SET);
+	{
+	//retv = SPI_transfer1(READ_ID);
+	tetv[0] = RESET_EN;
+
+	HAL_GPIO_WritePin(SPI1_CS_GPIO_Port,SPI1_CS_Pin,GPIO_PIN_RESET);
+	HAL_SPI_TransmitReceive(&hspi1,tetv,retv, 1, 1000);
+	HAL_GPIO_WritePin(SPI1_CS_GPIO_Port,SPI1_CS_Pin,GPIO_PIN_SET);
+
+	tetv[0] = RESET;
+
+	HAL_GPIO_WritePin(SPI1_CS_GPIO_Port,SPI1_CS_Pin,GPIO_PIN_RESET);
+	HAL_SPI_TransmitReceive(&hspi1,tetv,retv, 1, 1000);
+	HAL_GPIO_WritePin(SPI1_CS_GPIO_Port,SPI1_CS_Pin,GPIO_PIN_SET);
+
+
+	//tetv[0] = WRAP_TOGGLE;
+	//HAL_GPIO_WritePin(SPI1_CS_GPIO_Port,SPI1_CS_Pin,GPIO_PIN_RESET);
+	//HAL_SPI_TransmitReceive(&hspi1,tetv,retv, 1, 1000);
+	//HAL_GPIO_WritePin(SPI1_CS_GPIO_Port,SPI1_CS_Pin,GPIO_PIN_SET);
+
+
+	//HAL_GPIO_WritePin(SPI1_CS_GPIO_Port,SPI1_CS_Pin,GPIO_PIN_SET);
+	for(int i=0;i<10;i++)
+		printf("%02x ",retv[i]);
+	printf("\n");
+	}
+
+	for(int k=0;k<3;k++)
+	{
+	printf("\n");
+	//retv = SPI_transfer1(READ_ID);
+	tetv[0] = READ_ID;
+
+	HAL_GPIO_WritePin(SPI1_CS_GPIO_Port,SPI1_CS_Pin,GPIO_PIN_RESET);
+	HAL_SPI_TransmitReceive(&hspi1,tetv,retv, 10, 1000);
+	HAL_GPIO_WritePin(SPI1_CS_GPIO_Port,SPI1_CS_Pin,GPIO_PIN_SET);
+
+	for(int i=0;i<10;i++)
+		printf("%02x ",retv[i]);
+	printf("\n");
+
+	}
+	int address = 0xfff00;
+	tetv[0] = WRITE;
+	tetv[1] = (address>>16) & 0xff;
+	tetv[2] = (address>>8) & 0xff;
+	tetv[3] = (address>>0) & 0xff;
+	for(int i=0;i<64;i++)
+	{
+		tetv[4+i] = i;
+	}
+	HAL_GPIO_WritePin(SPI1_CS_GPIO_Port,SPI1_CS_Pin,GPIO_PIN_RESET);
+	HAL_SPI_TransmitReceive(&hspi1,tetv,retv, 4, 1000);
+	HAL_SPI_TransmitReceive(&hspi1,tetv+4,retv, 64, 1000);
+	HAL_GPIO_WritePin(SPI1_CS_GPIO_Port,SPI1_CS_Pin,GPIO_PIN_SET);
+
+	for(int k=0;k<2;k++)
+	{
+
+		tetv[0] = READ;
+		tetv[1] = (address>>16) & 0xff;
+		tetv[2] = (address>>8) & 0xff;
+		tetv[3] = (address>>0) & 0xff;
+		memset(retv,0xff,128);
+		HAL_GPIO_WritePin(SPI1_CS_GPIO_Port,SPI1_CS_Pin,GPIO_PIN_RESET);
+		HAL_SPI_TransmitReceive(&hspi1,tetv,retv, 4, 1000);
+		HAL_SPI_TransmitReceive(&hspi1,tetv,retv, 64, 1000);
+		HAL_GPIO_WritePin(SPI1_CS_GPIO_Port,SPI1_CS_Pin,GPIO_PIN_SET);
+		for(int i=0;i<64+5;i++)
+		{
+			printf("%02x ",retv[i]);
+		}
+		printf("\n");
+		tetv[0] = READ_FAST;
+		tetv[1] = (address>>16) & 0xff;
+		tetv[2] = (address>>8) & 0xff;
+		tetv[3] = (address>>0) & 0xff;
+		memset(retv,0xff,128);
+		HAL_GPIO_WritePin(SPI1_CS_GPIO_Port,SPI1_CS_Pin,GPIO_PIN_RESET);
+		HAL_SPI_TransmitReceive(&hspi1,tetv,retv, 5, 1000);
+		HAL_SPI_TransmitReceive(&hspi1,tetv,retv, 64, 1000);
+		HAL_GPIO_WritePin(SPI1_CS_GPIO_Port,SPI1_CS_Pin,GPIO_PIN_SET);
+		for(int i=0;i<64+5;i++)
+		{
+			printf("%02x ",retv[i]);
+		}
+		printf("\n");
+
+
+	}
+		int l;
+
+
+	{
+		uint32_t ticks = HAL_GetTick();
+		//hram_write32(0,block);
+		for(int k=0;k<HRAM_SIZE/32;k++)
+		//for(int k=0;k<0x3;k++)
+		{
+			for(l=0;l<8;l++)
+			{
+				block[l] = l+k*8+7;
+			}
+			hram_write32(k*32,block);
+		}
+		ticks = HAL_GetTick()-ticks;
+		printf("write take %d \n",ticks);
+	}
+	{
+		uint32_t ticks = HAL_GetTick();
+		int flagOk = 1;
+		hram_read32(0,block);
+		for(int k=0;k<HRAM_SIZE/32;k++)
+		//for(int k=0;k<0x3;k++)
+		{
+			hram_read32(k*32,block);
+			for(l=0;l<8;l++)
+			{
+				if(block[l] != l+k*8+7)
+				{
+					//printf("block[%02d]=%02x\n",l+k*8,block[l]);
+					flagOk = 0;
+				}
+
+			}
+		}
+		ticks = HAL_GetTick()-ticks;
+		printf("read take %d Ok = %d bytes =%d\n",ticks,flagOk,HRAM_SIZE/32*32);
+	}
+	{
+		uint32_t ticks = HAL_GetTick();
+		//hram_write32(0,block);
+		for(int k=0;k<(1<<23)/1024;k++)
+		//for(int k=0;k<0x3;k++)
+		{
+			for(l=0;l<256;l++)
+			{
+				block_long[l] = l+k*256+13;
+			}
+			hram_write1024(k*1024,block_long);
+		}
+		ticks = HAL_GetTick()-ticks;
+		printf("write take %d \n",ticks);
+	}
+	{
+		uint32_t ticks = HAL_GetTick();
+		int flagOk = 1;
+		hram_read32(0,block);
+		for(int k=0;k<HRAM_SIZE/1024;k++)
+		//for(int k=0;k<0x3;k++)
+		{
+			hram_read1024(k*1024,block_long);
+			for(l=0;l<256;l++)
+			{
+				if(block_long[l] != l+k*256+13)
+				{
+					//printf("block[%02d]=%02x\n",l+k*8,block[l]);
+					flagOk = 0;
+				}
+
+			}
+		}
+		ticks = HAL_GetTick()-ticks;
+		printf("read take %d Ok = %d bytes =%d\n",ticks,flagOk,HRAM_SIZE/1024*1024);
+	}
+	{
+		uint32_t ticks = HAL_GetTick();
+		for(int k=0;k<HRAM_SIZE/32;k++)
+		//for(int k=0;k<0x3;k++)
+		{
+			for(l=0;l<8;l++)
+			{
+				block[l] = l+k*8;
+			}
+			hram_write32F(k*32,block);
+		}
+		ticks = HAL_GetTick()-ticks;
+		printf("write take %d \n",ticks);
+	}
+	{
+		uint32_t ticks = HAL_GetTick();
+		int flagOk = 1;
+		//hram_read32(0,block);
+		for(int k=0;k<HRAM_SIZE/32;k++)
+		//for(int k=0;k<0x2;k++)
+		{
+			hram_read32F(k*32,block);
+			for(l=0;l<8;l++)
+			{
+				if(block[l] != l+k*8)
+				{
+					printf("block[%02d]=%02x\n",l+k*8,block[l]);
+					flagOk = 0;
+				}
+
+			}
+		}
+		ticks = HAL_GetTick()-ticks;
+		printf("read take %d Ok = %d\n",ticks,flagOk);
+	}
+
+#if 0
+write take 2963
+read take 4083 Ok = 1
+write take 2960
+read take 4118 Ok = 1
+#endif
+}
+
