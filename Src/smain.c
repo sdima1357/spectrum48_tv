@@ -767,17 +767,21 @@ void aSOUND_EVENTS_init()
 	CommonData.SincData.aSOUND_EVENTS_tail = 0;
 }
 
-int32_t aSOUND_EVENTS_size()
+inline int32_t aSOUND_EVENTS_size()
 {
 	return ((CommonData.SincData.aSOUND_EVENTS_head+SOUND_EVENT_ARRAY_SIZE)-CommonData.SincData.aSOUND_EVENTS_tail)%SOUND_EVENT_ARRAY_SIZE;
 }
 
 void aSOUND_EVENTS_put(union a_event ev)
 {
-	if(aSOUND_EVENTS_size()<SOUND_EVENT_ARRAY_SIZE-1)
+	if(aSOUND_EVENTS_size()<SOUND_EVENT_ARRAY_SIZE-2)
 	{
 		CommonData.SincData.aSOUND_EVENTS[CommonData.SincData.aSOUND_EVENTS_head] = ev;
 		CommonData.SincData.aSOUND_EVENTS_head = (CommonData.SincData.aSOUND_EVENTS_head+1)% SOUND_EVENT_ARRAY_SIZE;
+	}
+	else
+	{
+
 	}
 }
 void aSOUND_EVENTS_pop()
@@ -809,7 +813,9 @@ void sound_ay_write(uint8_t current, uint8_t data,int32_t tstates_ay)
 	r.u.cmd = current;
 	//~ if(flag128)
 	{
+
 		aSOUND_EVENTS_put(r);
+
 	}
 }
 
@@ -1126,7 +1132,7 @@ void proccesSoundEvents_time()
    // int sound_size1 = sound_size();
    // int rdelay = waitFor();
 	//waitFor();
-    int cntPush = 0;
+    //int cntPush = 0;
     //printf("flag128=%d\r\n",flag128);
     while(aSOUND_EVENTS_size())
     {
@@ -1158,7 +1164,7 @@ void proccesSoundEvents_time()
 				incrTick(tclockPerSoundRate);
 				amp = (getSign())*MAX_VOLUME/0x10000;
 			}
-			cntPush++;
+			//cntPush++;
 			//waitFor();
 			//fuller =fuller*990/1024;
 			push_pair(fuller+amp+MAX_VOLUME/2,fuller+amp+MAX_VOLUME/2);
@@ -1179,7 +1185,7 @@ void proccesSoundEvents_time()
 			amp = (getSign())*MAX_VOLUME/0x10000;
 			//amp = (getSign()+0x8000)*1903/0x10000;
     	}
-    	cntPush++;
+    	//cntPush++;
     	//waitFor();
     		//fuller =fuller*990/1024;
 		push_pair(fuller+amp+MAX_VOLUME/2,fuller+amp+MAX_VOLUME/2);
@@ -2030,17 +2036,19 @@ int z48_z128_dispatch(struct SYS_EVENT* ev)
 		}
 		soundEvents(100);
 		{
-			//int tstop = tstates+T69888;
-			//for(;tstates<T69888;)
+			//z80_interrupt();
+			for(int tt = 0;tt<SINCLAIR_FLAGS.T69888;tt+=500)
 			{
-				//z80_interrupt();
-				for(int tt = 0;tt<SINCLAIR_FLAGS.T69888;tt+=500)
+				z80_run(tt);
+				procKeyb();
+				 // new lines prevent sound buffer overflow
+				if(aSOUND_EVENTS_size()>SOUND_EVENT_ARRAY_SIZE/2)
 				{
-					z80_run(tt);
-					procKeyb();
+					proccesSoundEvents_time();
+					soundEvents(100);
 				}
-				z80_run(SINCLAIR_FLAGS.T69888);
 			}
+			z80_run(SINCLAIR_FLAGS.T69888);
 		}
 		setTapeSpeedImp();
 		uint32_t cputime = HAL_GetTick() - tickstart;

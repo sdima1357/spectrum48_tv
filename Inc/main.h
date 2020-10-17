@@ -188,8 +188,9 @@ struct SYS_EVENT
 #ifdef DAC_OUTPUT
 #define     MAX_VOLUME 4095
 #else
-#define     FREQ 42
-#define     MAX_VOLUME (FREQ*1000000/44100-1)
+//#define     FREQ 42
+//#define     MAX_VOLUME (FREQ*1000000/44100-1)
+#define     MAX_VOLUME 255
 //#define     MAX_VOLUME 3265
 #endif
 typedef int  (*dispathFunction)(struct SYS_EVENT* ev);

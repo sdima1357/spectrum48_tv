@@ -186,7 +186,7 @@ int getVolume0()
 }
 
 #if 1
-#define H_SIZE_BITS (6)
+#define H_SIZE_BITS (8)
 #define H_SIZE (1<<H_SIZE_BITS)
 #define R_SIZE_BITS (11)
 #define R_SIZE (1<<R_SIZE_BITS)
@@ -759,7 +759,7 @@ int waitFor()
 void push_pair(uint16_t Left,uint16_t Right)
 {
 	iwaitFor();
-	VoiceBuff1T[sound_head] = Right>>2;
+	VoiceBuff1T[sound_head] = Right;
 	sound_head = (sound_head+1)&(R_SIZE-1);
 }
 void cleanAudioBuffer()
@@ -782,7 +782,7 @@ void TIM4_TC7()
 	int k;
 	for(k=H_SIZE/2;k<H_SIZE;k++)
 	{
-		VoiceBuff1[k] =((uint16_t)(VoiceBuff1T[sound_tail]))<<2;
+		VoiceBuff1[k] =((uint16_t)(VoiceBuff1T[sound_tail]));
 		sound_tail = (sound_tail+1)&(R_SIZE-1);
 	}
 }
@@ -792,7 +792,7 @@ void TIM4_HT7()
 	int k;
 	for(k=0;k<H_SIZE/2;k++)
 	{
-		VoiceBuff1[k] = ((uint16_t) (VoiceBuff1T[sound_tail]))<<2;
+		VoiceBuff1[k] = ((uint16_t) (VoiceBuff1T[sound_tail]));
 		sound_tail = (sound_tail+1)&(R_SIZE-1);
 	}
 }
@@ -1688,7 +1688,7 @@ static void MX_TIM4_Init(void)
 
   LL_DMA_SetDataTransferDirection(DMA1, LL_DMA_STREAM_7, LL_DMA_DIRECTION_MEMORY_TO_PERIPH);
 
-  LL_DMA_SetStreamPriorityLevel(DMA1, LL_DMA_STREAM_7, LL_DMA_PRIORITY_MEDIUM);
+  LL_DMA_SetStreamPriorityLevel(DMA1, LL_DMA_STREAM_7, LL_DMA_PRIORITY_HIGH);
 
   LL_DMA_SetMode(DMA1, LL_DMA_STREAM_7, LL_DMA_MODE_CIRCULAR);
 
